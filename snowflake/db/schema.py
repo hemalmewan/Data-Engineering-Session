@@ -1,10 +1,9 @@
 # ===========================
 # Import Required Libraries
 # ===========================
-import snowflake.connector
+from snowflake import connector
 from loguru import logger
 from dotenv import load_dotenv
-import os
 
 ##============================
 ## User Define Python Modules
@@ -17,7 +16,7 @@ snowflake_config = SnowflakeConfig()
 # ===========================
 # Connect to Snowflake
 # ===========================
-conn = snowflake.connector.connect(
+conn = connector.connect(
     account=snowflake_config.account,
     user=snowflake_config.user,
     password=snowflake_config.password,
@@ -73,11 +72,10 @@ def create_schemas():
                 city STRING,
                 country STRING,
                 temperature FLOAT,
-                humidity INTEGER,
-                weather_condition STRING,
+                humidity FLOAT,
                 wind_speed FLOAT,
-                observation_time TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
+                weather_condition STRING,
+                observation_time TIMESTAMP
             )
             """
         )
@@ -90,11 +88,12 @@ def create_schemas():
             CREATE TABLE IF NOT EXISTS {snowflake_config.analytics_table}
             (
                 city STRING,
+                country STRING,
                 avg_temperature FLOAT,
                 avg_humidity FLOAT,
+                avg_wind_speed FLOAT,
                 max_temperature FLOAT,
                 min_temperature FLOAT,
-                record_date DATE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
             )
             """

@@ -2,7 +2,7 @@
 ## Import Required Libraries
 ##===========================
 from loguru import logger
-import snowflake
+from snowflake import connector
 import json
 from pathlib import Path
 from typing import Optional,List,Dict,Any
@@ -18,7 +18,7 @@ snowflake_config=SnowflakeConfig()
 ##===========================
 ## Connect to Snowflake
 ##===========================
-conn=snowflake.connector.connect(
+conn=connector.connect(
     account=snowflake_config.account,
     user=snowflake_config.user,
     password=snowflake_config.password,
@@ -43,7 +43,7 @@ def load_raw_json_files() -> List[Dict[str,Any]]:
     records=[]
     try:
         json_files=list(_DATA_DIRECTORY.glob("*.json")) ## number of json files
-        logger.info("Found %s JSON files",len(json_files))
+        logger.info("Found {} JSON files",len(json_files))
 
         if not json_files:
             logger.warning("No JSON files found")
@@ -61,10 +61,10 @@ def load_raw_json_files() -> List[Dict[str,Any]]:
                     records.append(data)
 
         
-        logger.info("Loaded %s records from JSON files",len(records))
+        logger.info("Loaded {} records from JSON files",len(records))
     
     except Exception as e:
-        logger.error("Error loading JSON files: %s",e)
+        logger.error("Error loading JSON files: {}",e)
         raise
     
     return records
@@ -81,7 +81,7 @@ def insert_weather_data(records:List[Dict[str,Any]]):
     
     cursor=conn.cursor()
 
-    logger.info("Inserting %s records into Snowflake....",len(records))
+    logger.info("Inserting {} records into Snowflake....",len(records))
 
     try:
         insert_query="""
@@ -91,8 +91,8 @@ def insert_weather_data(records:List[Dict[str,Any]]):
             country,
             temperature,
             humidity,
-            weather_condition,
             wind_speed,
+            weather_condition,
             observation_time
           )
           VALUES(%s,%s,%s,%s,%s,%s,%s)
@@ -105,25 +105,23 @@ def insert_weather_data(records:List[Dict[str,Any]]):
 
             rows.append(
                 (
-
-                record.get("city"),
-                record.get("country"),
-                record.get("temperature"),
-                record.get("humidity"),
-                record.get("weather_condition"),
-                record.get("wind_speed"),
-                record.get("observation_time")
-
+                record.get("name"),
+                record.get("sys","").get("country",""),
+                record.get("main").get("temp"),
+                record.get("main").get("humidity"),
+                record.get("wind").get("speed"),
+                record.get("weather")[0]["description"],
+                record.get("_extracted_at")
                 )
             )
         
         cursor.executemany(insert_query,rows)
         conn.commit()
 
-        logger.info("Successfully inserted %s records",len(rows))
+        logger.info("Successfully inserted {} records",len(rows))
 
     except Exception as e:
-        logger.error("Error inserting data into Snowflake: %s",e)
+        logger.error("Error inserting data into Snowflake: {}",e)
         raise
 
     finally:
@@ -142,7 +140,7 @@ def main():
         insert_weather_data(raw_data)
     
     except Exception as e:
-        logger.error("Error in Snowflake Loader Pipeline: %s",e)
+        logger.error("Error in Snowflake Loader Pipeline: {}",e)
         raise
     
     finally:
@@ -151,5 +149,5 @@ def main():
     
 
 
-if __name__=="__main__":
-    main()
+# if __name__=="__main__":
+#     main()

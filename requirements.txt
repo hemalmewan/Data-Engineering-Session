@@ -1,5 +1,5 @@
 python-dotenv
 loguru
 requests
-apache-airflow>=2.8.0
+apache-airflow
 snowflake-connector-python
