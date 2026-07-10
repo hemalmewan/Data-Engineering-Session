@@ -56,3 +56,5 @@ with DAG(
 
 
     quality_task >> analytics_task >> city_task
+
+

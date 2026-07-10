@@ -16,6 +16,10 @@ from snowflake.data_loader.snowflake_loader import (
     main as load_weather_data
 )
 
+from snowflake.db.schema import (
+    create_schemas
+)
+
 
 default_args = {
     "owner": "Data Engineering Session",
@@ -41,6 +45,11 @@ with DAG(
         python_callable=extract_weather_data
     )
 
+    schema_task = PythonOperator(
+        task_id="create_schemas",
+        python_callable=create_schemas
+    )
+
 
     load_task = PythonOperator(
         task_id="load_weather_staging",
@@ -48,4 +57,4 @@ with DAG(
     )
 
 
-    extract_task >> load_task
+    extract_task >> schema_task >> load_task
