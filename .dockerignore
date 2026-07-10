@@ -1,0 +1,9 @@
+.astro
+.git
+.env
+airflow_settings.yaml
+logs/
+Data-Eng-Session
+airflow.db
+airflow.cfg
+__pycache__
