@@ -8,6 +8,16 @@ from datetime import datetime,timezone
 import requests
 from pathlib import Path
 
+##==================
+## Root Directory
+##==================
+_ROOT_DIRECTORY=Path(__file__).parents[1]
+
+##===================
+## RAW Data Directory
+##===================
+_RAW_DATA_DIRECTORY=_ROOT_DIRECTORY / "data" / "raw"
+
 ##============================
 ## User Define Python Modules
 ##============================
@@ -53,20 +63,29 @@ class WeatherExtractor:
 
         return data
     
-    def fetch_multiple_cities(self,cities:List[str]) -> List[Dict[str,Any]]:
+    def fetch_multiple_cities(
+        self,
+        cities:List[str]
+        ) -> List[Dict[str,Any]]:
+
         cities=cities or _CITIES
-        results=List[Dict[str,Any]]=[]
+        results:List[Dict[str,Any]]=[]
 
         for city in cities:
             try:
-                logger.info("Fetching weather for %s",city)
+                logger.info("Fetching weather for {}",city)
                 results.append(self.fetch_city_weather(city))
             except Exception as e:
-                logger.error("Failed to fetch weather data for %s: %s",city,e)
+                logger.error("Failed to fetch weather data for {}: {}",city,e)
 
         return results
     
-    def save_to_file(self,data:List[Dict[str,Any]], output_dir:str="data/raw") -> str:
+    def save_to_file(
+        self,
+        data:List[Dict[str,Any]], 
+        output_dir:str=_RAW_DATA_DIRECTORY
+        ) -> str:
+
         Path(output_dir).mkdir(parents=True,exist_ok=True) ## create a directory if not exists
         timestamp_str=datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S") ## create a timestamp
 
@@ -80,7 +99,10 @@ class WeatherExtractor:
     
 
 
-def run_extraction_pipeline(cities:Optional[List[str]]=None,output_dir:str="data/raw") -> str:
+def run_extraction_pipeline(
+    cities:Optional[List[str]]=None,
+    output_dir:str=_RAW_DATA_DIRECTORY
+    ) -> str:
     
     extractor=WeatherExtractor()
 
