@@ -25,13 +25,14 @@ conn=connector.connect(
     database=snowflake_config.database,
     schema=snowflake_config.schema
 )
-cursor=conn.cursor()
+
 
 ##===========================
 ## Weather Data Analysis
 ##===========================
 def analyze_weather_data():
     logger.info("Starting weather data analysis....")
+    cursor=conn.cursor()
 
     try:
         cursor.execute(
@@ -44,9 +45,7 @@ def analyze_weather_data():
                 avg_humidity,
                 avg_wind_speed,
                 max_temperature,
-                min_temperature,
-                record_date,
-
+                min_temperature
             )
             SELECT
                 city,
@@ -55,9 +54,9 @@ def analyze_weather_data():
                 AVG(humidity) as avg_humidity,
                 AVG(wind_speed) as avg_wind_speed,
                 MAX(temperature) as max_temperature,
-                MIN(temperature) as min_temperature,
+                MIN(temperature) as min_temperature
             FROM WEATHER_STAGING
-            GROUP BY city
+            GROUP BY city,country;
             """
         )
 
@@ -80,6 +79,7 @@ def analyze_weather_data():
 ##=============================
 def split_city_tables():
     logger.info("Creating city-wise tables....")
+    cursor=conn.cursor()
 
     try:
         cursor.execute("SELECT DISTINCT city FROM WEATHER_ANALYTICS")
@@ -100,7 +100,7 @@ def split_city_tables():
                 avg_wind_speed,
                 max_temperature,
                 min_temperature,
-                record_date
+                created_at
               FROM WEATHER_ANALYTICS
               WHERE city ='{city}'
             """)

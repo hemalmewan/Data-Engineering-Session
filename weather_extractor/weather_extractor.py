@@ -16,7 +16,7 @@ _ROOT_DIRECTORY=Path(__file__).parents[1]
 ##===================
 ## RAW Data Directory
 ##===================
-_RAW_DATA_DIRECTORY=_ROOT_DIRECTORY / "data" / "raw"
+_RAW_DATA_DIRECTORY = Path("/usr/local/airflow/data/raw")
 
 ##============================
 ## User Define Python Modules
@@ -94,7 +94,7 @@ class WeatherExtractor:
         with open(filepath,"w",encoding="utf-8") as f:
             json.dump(data,f,ensure_ascii=False,indent=2)
         
-        logger.info("Save %d records to %s",len(data),filepath)
+        logger.info("Save {} records to {}",len(data),filepath)
         return str(filepath)
     
 
@@ -115,11 +115,8 @@ def run_extraction_pipeline(
     return file_path
 
 
-if __name__=="__main__":
-    path=run_extraction_pipeline()
-    print(f"Weather data saved to {path}")
-
-    
+# if __name__=="__main__":
+#     run_extraction_pipeline()
     
     
 

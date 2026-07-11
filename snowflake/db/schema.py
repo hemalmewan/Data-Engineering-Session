@@ -111,5 +111,15 @@ def create_schemas():
         logger.info("Snowflake connection closed")
 
 
-if __name__ == "__main__":
-    create_schemas()
+if __name__=="__main__":
+# # #     #create_schemas()
+
+    cursor=conn.cursor()
+    cursor.execute(
+    """
+    DROP DATABASE IF EXISTS WEATHER_DB;
+    """
+    )
+    cursor.close()
+    conn.close()
+    

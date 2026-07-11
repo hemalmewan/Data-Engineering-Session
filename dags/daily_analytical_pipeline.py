@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 ## User Define Python Modules
 ##==============================
 from snowflake.data_analysis.data_analysis import (
-    validate_weather_data as validate
+    validate_data as validate
 )
 
 from snowflake.data_analysis.aggregate_splitting import (

@@ -25,23 +25,25 @@ conn=connector.connect(
     database=snowflake_config.database,
     schema=snowflake_config.schema
 )
-cursor=conn.cursor()
 
 ##=======================
 ## Analyze wheather data
 ##=======================
 def is_null() -> bool:
 
+    cursor=conn.cursor()
+
     try:
         cursor.execute(
             """
             SELECT COUNT(*)
-            FROM WEATHER_STATING
+            FROM WEATHER_STAGING
             WHERE city IS NULL
                 OR temperature IS NULL
-                OR humadity IS NULL
+                OR humidity IS NULL
                 OR wind_speed IS NULL
-                OR record_time IS NULL
+                OR weather_condition IS NULL
+                OR observation_time IS NULL
             """
         )
 
@@ -57,14 +59,17 @@ def is_null() -> bool:
             
 
 def is_duplicate() -> bool:
+
+    cursor=conn.cursor()
+
     try:
         cursor.execute(
             """
             SELECT COUNT(*)
             FROM (
-              SELECT city,record_time
-              FROM WHEATHER_STAGING
-              GROUP BY city,record_time
+              SELECT city,observation_time
+              FROM WEATHER_STAGING
+              GROUP BY city,observation_time
               HAVING COUNT(*) >1   
             )
             """

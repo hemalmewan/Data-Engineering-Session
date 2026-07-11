@@ -29,10 +29,10 @@ conn=connector.connect(
 
 )
 
-##====================
+##===================
 ## RAW Data Directory
-##====================
-_DATA_DIRECTORY=Path(__file__).parents[1]/"data"/"raw"
+##===================
+_DATA_DIRECTORY = Path("/usr/local/airflow/data/raw")
 
 ##=====================
 ## Load Raw JSON Files
@@ -149,5 +149,3 @@ def main():
     
 
 
-# if __name__=="__main__":
-#     main()
