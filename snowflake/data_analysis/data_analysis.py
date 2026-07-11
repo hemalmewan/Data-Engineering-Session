@@ -1,3 +1,18 @@
+"""Data quality validation for the staging weather table.
+
+This module performs the quality-gate stage of the daily analytics pipeline.
+It runs checks against the ``WEATHER_STAGING`` table to ensure the data is fit
+for aggregation:
+
+- :func:`is_null`: detects missing values in required columns.
+- :func:`is_duplicate`: detects duplicate ``(city, observation_time)`` rows.
+- :func:`validate_data`: orchestrates both checks and fails the pipeline if
+  either problem is found.
+
+:func:`validate_data` is wired into the ``data_quality_check`` task of the
+``weather_daily_analytics`` DAG and runs before any aggregation happens.
+"""
+
 ##===========================
 ## Import Required Libraries
 ##===========================
@@ -30,7 +45,19 @@ conn=connector.connect(
 ## Analyze wheather data
 ##=======================
 def is_null() -> bool:
+    """Check for missing values in the staging table.
 
+    Counts rows in ``WEATHER_STAGING`` where any required column (city,
+    temperature, humidity, wind_speed, weather_condition, observation_time)
+    is ``NULL``.
+
+    Returns:
+        ``True`` if at least one row has a null in a required column,
+        otherwise ``False``.
+
+    Raises:
+        Exception: Re-raised if the query fails.
+    """
     cursor=conn.cursor()
 
     try:
@@ -59,7 +86,18 @@ def is_null() -> bool:
             
 
 def is_duplicate() -> bool:
+    """Check for duplicate observations in the staging table.
 
+    Groups ``WEATHER_STAGING`` by ``(city, observation_time)`` and counts any
+    groups that appear more than once.
+
+    Returns:
+        ``True`` if any duplicate ``(city, observation_time)`` combination
+        exists, otherwise ``False``.
+
+    Raises:
+        Exception: Re-raised if the query fails.
+    """
     cursor=conn.cursor()
 
     try:
@@ -89,6 +127,14 @@ def is_duplicate() -> bool:
 
 
 def validate_data():
+    """Run all data quality checks and gate the pipeline.
+
+    Runs the null and duplicate checks. If either fails, an exception is
+    raised to stop the daily analytics pipeline before aggregation runs.
+
+    Raises:
+        Exception: If null values or duplicate observations are detected.
+    """
     logger.info("Validating weather data")
 
     null_found=is_null()

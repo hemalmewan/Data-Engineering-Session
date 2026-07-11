@@ -1,3 +1,19 @@
+"""Airflow DAG: hourly weather ingestion.
+
+Defines the ``weather_hourly_ingestion`` DAG, which runs every hour to pull
+current weather data and land it in Snowflake's staging table. The DAG chains
+three tasks:
+
+1. ``extract_weather_api`` -> fetch weather from the OpenWeather API and save
+   raw JSON to disk (:func:`weather_extractor.weather_extractor.run_extraction_pipeline`).
+2. ``create_schemas`` -> ensure the Snowflake database, schema, and tables
+   exist (:func:`snowflake.db.schema.create_schemas`).
+3. ``load_weather_staging`` -> load the raw JSON into ``WEATHER_STAGING``
+   (:func:`snowflake.data_loader.snowflake_loader.main`).
+
+Schedule: ``0 * * * *`` (top of every hour), no catchup.
+"""
+
 ##===========================
 ## Import Required Libraries
 ##===========================

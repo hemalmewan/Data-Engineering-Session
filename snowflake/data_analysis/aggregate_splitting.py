@@ -1,3 +1,18 @@
+"""Aggregate weather data and split it into per-city tables.
+
+This module contains the analytics stages of the daily pipeline, run after the
+data quality gate passes:
+
+- :func:`analyze_weather_data`: aggregates the raw ``WEATHER_STAGING`` rows
+  (averages, min/max) grouped by city and country, and writes the result into
+  ``WEATHER_ANALYTICS``.
+- :func:`split_city_tables`: materialises one table per city from the analytics
+  table for convenient per-city querying.
+
+Both functions are wired into the ``weather_daily_analytics`` DAG as the
+``aggregate_weather_data`` and ``split_city_tables`` tasks respectively.
+"""
+
 ##===========================
 ## Import Required Libraries
 ##===========================
@@ -31,6 +46,16 @@ conn=connector.connect(
 ## Weather Data Analysis
 ##===========================
 def analyze_weather_data():
+    """Aggregate staging data into the analytics table.
+
+    Computes per-``(city, country)`` averages of temperature, humidity, and
+    wind speed, along with the min and max temperature, from
+    ``WEATHER_STAGING`` and inserts the results into ``WEATHER_ANALYTICS``.
+    The connection is closed in the ``finally`` block.
+
+    Raises:
+        Exception: Re-raised if the aggregation query fails.
+    """
     logger.info("Starting weather data analysis....")
     cursor=conn.cursor()
 
@@ -78,6 +103,16 @@ def analyze_weather_data():
 ## Split the Tables City wise
 ##=============================
 def split_city_tables():
+    """Create one analytics table per city.
+
+    Reads the distinct cities from ``WEATHER_ANALYTICS`` and, for each one,
+    creates (or replaces) a dedicated table named after the city (uppercased,
+    spaces replaced with underscores) containing only that city's rows. The
+    connection is closed in the ``finally`` block.
+
+    Raises:
+        Exception: Re-raised if reading cities or creating a table fails.
+    """
     logger.info("Creating city-wise tables....")
     cursor=conn.cursor()
 

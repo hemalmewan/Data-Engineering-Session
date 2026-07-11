@@ -1,3 +1,15 @@
+"""Load raw weather JSON files into the Snowflake staging table.
+
+This module is the loading stage of the hourly ingestion pipeline. It reads
+the JSON files produced by :mod:`weather_extractor.weather_extractor`, flattens
+each OpenWeather record into a relational row, and bulk-inserts the rows into
+the ``WEATHER_STAGING`` table.
+
+A module-level Snowflake connection is opened on import using
+:class:`config.config.SnowflakeConfig`, and :func:`main` is the callable wired
+into the ``load_weather_staging`` task of the ``weather_hourly_ingestion`` DAG.
+"""
+
 ##===========================
 ## Import Required Libraries
 ##===========================
@@ -38,6 +50,19 @@ _DATA_DIRECTORY = Path("/usr/local/airflow/data/raw")
 ## Load Raw JSON Files
 ##=====================
 def load_raw_json_files() -> List[Dict[str,Any]]:
+    """Read all raw weather JSON files from the raw data directory.
+
+    Scans :data:`_DATA_DIRECTORY` for ``*.json`` files and loads their
+    contents. Files containing a list of records are flattened into the
+    result, while files containing a single record are appended directly.
+
+    Returns:
+        A combined list of weather record dictionaries across all files.
+        Empty if no JSON files are found.
+
+    Raises:
+        Exception: Re-raised if any file cannot be read or parsed.
+    """
     logger.info("Loading raw JSON files....")
 
     records=[]
@@ -74,7 +99,21 @@ def load_raw_json_files() -> List[Dict[str,Any]]:
 ## Insert Data Into Snowflake
 ##=============================
 def insert_weather_data(records:List[Dict[str,Any]]):
+    """Insert weather records into the ``WEATHER_STAGING`` table.
 
+    Flattens each nested OpenWeather record into a row of
+    ``(city, country, temperature, humidity, wind_speed, weather_condition,
+    observation_time)`` and bulk-inserts them in a single transaction.
+
+    Args:
+        records: List of weather record dictionaries. Each item may be a dict
+            or a JSON-encoded string. If the list is empty, the function
+            returns without touching Snowflake.
+
+    Raises:
+        Exception: Re-raised if the insert fails; the transaction is not
+            committed in that case.
+    """
     if not records:
         logger.warning("No records to insert")
         return
@@ -133,6 +172,16 @@ def insert_weather_data(records:List[Dict[str,Any]]):
 ## Main Pipeline
 ##===============
 def main():
+    """Run the full staging-load stage.
+
+    Loads all raw JSON files from disk and inserts the parsed records into the
+    Snowflake staging table. The module-level connection is always closed in
+    the ``finally`` block. This is the callable invoked by the
+    ``load_weather_staging`` Airflow task.
+
+    Raises:
+        Exception: Re-raised if loading or inserting fails.
+    """
     logger.info("Staring Snowflake Loader Pipeline")
 
     try:

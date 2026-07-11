@@ -1,3 +1,14 @@
+"""Create the Snowflake database objects used by the pipeline.
+
+This module provisions all the Snowflake structures the pipeline depends on:
+the ``WEATHER_DB`` database, the ``RAW`` schema, the ``WEATHER_STAGING`` table
+(raw ingested rows), and the ``WEATHER_ANALYTICS`` table (aggregated results).
+
+All statements use ``IF NOT EXISTS`` so the module is idempotent and safe to
+run on every DAG execution. :func:`create_schemas` is wired into the
+``create_schemas`` task of the ``weather_hourly_ingestion`` DAG.
+"""
+
 # ===========================
 # Import Required Libraries
 # ===========================
@@ -28,7 +39,16 @@ conn = connector.connect(
 # Create Database Objects
 # ===========================
 def create_schemas():
+    """Create the database, schema, and tables if they do not exist.
 
+    Executes, in order: create/use the database, create/use the schema,
+    create the staging table, and create the analytics table. Every statement
+    is idempotent (``IF NOT EXISTS``), so repeated runs are harmless. The
+    Snowflake connection is closed in the ``finally`` block.
+
+    Raises:
+        Exception: Re-raised if any DDL statement fails.
+    """
     logger.info("Creating database objects...")
     cursor = conn.cursor()
 
