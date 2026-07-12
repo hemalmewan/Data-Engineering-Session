@@ -125,24 +125,55 @@ def is_duplicate() -> bool:
         cursor.close()
 
 
+def remove_duplicates():
+
+    cursor = conn.cursor()
+
+    try:
+        logger.info("Removing duplicate records...")
+
+        cursor.execute("""
+            DELETE FROM WEATHER_STAGING
+            WHERE (city, observation_time) IN (
+                SELECT city, observation_time
+                FROM (
+                    SELECT
+                        city,
+                        observation_time,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY city, observation_time
+                            ORDER BY observation_time
+                        ) AS rn
+                    FROM WEATHER_STAGING
+                )
+                WHERE rn > 1
+            )
+        """)
+
+        conn.commit()
+
+        logger.info("Duplicate records removed.")
+
+    except Exception as e:
+        logger.error("Error removing duplicates: {}", e)
+        raise
+
+    finally:
+        cursor.close()
+
 
 def validate_data():
-    """Run all data quality checks and gate the pipeline.
 
-    Runs the null and duplicate checks. If either fails, an exception is
-    raised to stop the daily analytics pipeline before aggregation runs.
-
-    Raises:
-        Exception: If null values or duplicate observations are detected.
-    """
     logger.info("Validating weather data")
 
-    null_found=is_null()
-    duplicate_found=is_duplicate()
+    if is_null():
+        raise Exception("NULL values found.")
 
-    if null_found or duplicate_found:
-        logger.warning("Data validation failed. Null values or duplicates found")
+    if is_duplicate():
+        logger.warning("Duplicate records found.")
+        remove_duplicates()
 
-        raise Exception("Data quality check failed. Stopping pipeline.")
-    
-    logger.info("Data validation passed")
+        if is_duplicate():
+            raise Exception("Unable to remove duplicate records.")
+
+    logger.info("Data validation passed.")

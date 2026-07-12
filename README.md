@@ -282,3 +282,6 @@ Every Python module and public function is documented with docstrings. Quick map
 ---
 
 *Orchestrated with Apache Airflow on the Astronomer runtime. Data warehoused in Snowflake.*
+
+## astro install command
+winget install astronomer.astro
