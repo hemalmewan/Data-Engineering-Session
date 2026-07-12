@@ -17,8 +17,7 @@ Schedule: ``0 0 * * *`` (every midnight), no catchup.
 ##==========================
 ## Import Required Libraries
 ##==========================
-from airflow import DAG
-from airflow.operators.python import PythonOperator
+
 from datetime import datetime, timedelta
 
 ##==============================
@@ -52,25 +51,5 @@ with DAG(
     tags=["weather", "analytics"]
 ) as dag:
 
-
-    quality_task = PythonOperator(
-        task_id="data_quality_check",
-        python_callable=validate
-    )
-
-
-    analytics_task = PythonOperator(
-        task_id="aggregate_weather_data",
-        python_callable=analyze_weather_data
-    )
-
-
-    city_task = PythonOperator(
-        task_id="split_city_tables",
-        python_callable=split_city_tables
-    )
-
-
-    quality_task >> analytics_task >> city_task
 
 
